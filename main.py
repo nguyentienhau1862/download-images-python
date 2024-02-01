@@ -1,4 +1,5 @@
 from os import path, makedirs
+from json import loads
 from lib import download_image, get_urls_from_page
 
 def download_comic(comic = { "name": "", "url": "" }, comics_dir = ""):
@@ -19,10 +20,35 @@ def download_comic(comic = { "name": "", "url": "" }, comics_dir = ""):
 		with open(path.join(comic_dir, comic["name"] + ".docx"), "a") as file:
 			file.close()
 
-if __name__ == "__main__":
-	comics_dir = "D:/Private"
+def download_image_from_page(page_url = "", image_dir = ""):
+	if page_url:
+		css_selector = ".sidebar:has(a#png) a#png, .sidebar:not(.sidebar:has(a#png)) a#highres"
+		image_urls = get_urls_from_page(page_url, css_selector, "href")
 
-	download_comic({
-		"name": "Fuck Buddies With My Girlfriend's Mom Chapter 1 - Maimu Maimu",
-		"url": "https://lxmanga.net/truyen/fuck-buddies-with-my-girlfriend-s-mom/chapter-1"
-	}, comics_dir)
+		for image_url in image_urls:
+			old_name_splitted = image_url.split("/").pop().split("%20")
+			image_path = path.join(image_dir, old_name_splitted[2] + " " + old_name_splitted[-1])
+			download_image(image_url, image_path)
+			print(image_path)
+
+if __name__ == "__main__":
+	# Download Comic
+	comics_dir = "D:/Private"
+	comics_data_path = "./comics.json"
+	file = open(comics_data_path, "r")
+	comics = loads(file.read())
+	file.close()
+
+	download_comic(comics[0], comics_dir)
+
+	# Download Images
+	image_page_url_template = "https://konachan.com/post/show/"
+	images_dir = "D:/Downloads"
+	begin_index = 1
+	end_index = 371300
+
+	if not path.isdir(images_dir):
+		makedirs(images_dir)
+
+	for i in range(end_index - 99, end_index + 1):
+		download_image_from_page(image_page_url_template + str(i), images_dir)
